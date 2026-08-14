@@ -1,5 +1,7 @@
 from flask import Flask
 from db import SessionLocal, engine, Base
+from models.clientes import Cliente
+from models.usuarios import Usuario, Role
 
 from api.admin import bp as admin
 

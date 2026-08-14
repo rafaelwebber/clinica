@@ -1,4 +1,4 @@
-from sqlalchemy import Date, ForeignKey, Integer, String, Column
+from sqlalchemy import VARCHAR, Date, ForeignKey, Integer, String, Column
 from db import Base
 
 
@@ -14,13 +14,13 @@ class Usuario(Base):
     role_id = Column(Integer,ForeignKey(Role.role_id), nullable=False)
 
     nome = Column(String(100))
-    cpf = Column(Integer)
-    rg = Column(Integer)
+    cpf = Column(VARCHAR(11))
+    rg = Column(VARCHAR(9))
     data_nascimento = Column(Date)
     email = Column(String(100))
-    telefone = Column(Integer)
-    telefone_secundario = Column(Integer)
-    senha = Column(String(200))
+    telefone = Column(VARCHAR(11))
+    telefone_secundario = Column(VARCHAR(11))
+    senha = Column(String(500))
     
     create_data = Column(Date)
     update_data = Column(Date)
