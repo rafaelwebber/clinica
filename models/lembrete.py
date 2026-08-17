@@ -1,0 +1,36 @@
+from db import Base
+from sqlalchemy import Column, Date, ForeignKey, Integer, String, Time
+from models.consultas import Consulta
+
+
+
+class Template(Base):
+    __tablename__= "template"
+
+    id_mensagem = Column(Integer, primary_key=True)
+    
+    titulo = Column(String(50))
+    conteudo = Column(String(200))
+    
+    create_data = Column(Date)
+    update_data = Column(Date)
+
+
+
+class Lembrete(Base):
+    __tablename__ = "Lembrete"
+
+    id_lembrete = Column(Integer, primary_key=True)
+    id_mensagem = Column(Integer, ForeignKey(Template.id_mensagem), nullable=False)
+    id_consulta = Column(Integer, ForeignKey(Consulta.id_consulta), nullable=False)
+
+    data_disparo = Column(Date)
+    horario_disparo = Column(Time)
+    tipo_disparo = Column(String(50))
+    status = Column(String(10))
+
+    create_data = Column(Date)
+    update_data = Column(Date)   
+
+
+    
