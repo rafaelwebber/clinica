@@ -1,5 +1,6 @@
 from datetime import date, datetime
 from flask import Flask, jsonify, request, Blueprint
+from flask_jwt_extended import jwt_required
 from sqlalchemy import text
 from db import SessionLocal
 from services.helpers import buscar_id
@@ -8,6 +9,7 @@ bp = Blueprint("operacional", __name__)
 
 
 @bp.get("/api/v1/operacional/consultas")
+@jwt_required()
 def listar_consultas():
     conn = SessionLocal()
 
@@ -37,6 +39,7 @@ def listar_consultas():
         conn.close()
         
 @bp.post("/api/v1/operacional/consultas")
+@jwt_required()
 def create_consulta():
     
     payload = request.get_json() or {}
@@ -77,6 +80,7 @@ def create_consulta():
         conn.close()
 
 @bp.patch("/api/v1/operacional/<int:id_consulta>/consultas")
+@jwt_required()
 def atualizar_consultas(id_consulta):
     data = request.get_json() or {}
  
@@ -120,6 +124,7 @@ def atualizar_consultas(id_consulta):
         conn.close()
 
 @bp.get("/api/v1/operacional/template")
+@jwt_required()
 def listar_mensagens():
     conn= SessionLocal()
 
@@ -140,6 +145,7 @@ def listar_mensagens():
         conn.close()
 
 @bp.post("/api/v1/operacional/template")
+@jwt_required()
 def create_mensagem():
     data = request.get_json() or {}
 
@@ -174,6 +180,7 @@ def create_mensagem():
         conn.close()
     
 @bp.patch("/api/v1/operacional/<int:id_mensagem>/template")
+@jwt_required()
 def atualizar_mensagem(id_mensagem):
     data = request.get_json() or {}
     if data != data.get("titulo") or data.get("conteudo"):
@@ -225,6 +232,7 @@ def atualizar_mensagem(id_mensagem):
         conn.close()
 
 @bp.delete("/api/v1/operacional/<int:id_mensagem>/template")
+@jwt_required()
 def deletar_template(id_mensagem):
     conn = SessionLocal()
     conn.execute(text(

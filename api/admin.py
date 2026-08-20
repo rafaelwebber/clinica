@@ -2,15 +2,41 @@ from datetime import datetime
 from flask import Flask, request, Blueprint, jsonify
 from sqlalchemy.engine import row
 from sqlalchemy.sql import text
-from werkzeug.security import generate_password_hash
-
+from werkzeug.security import check_password_hash, generate_password_hash
 import db
+from flask_jwt_extended import create_access_token, jwt_required
 
 
 bp = Blueprint("admin", __name__)
 
+@bp.post("/api/v1/admin/login")    
+def login():
+    data = request.get_json() or {}
+    
+    email = data.get("email")
+    senha = data.get("senha")
+
+    if not email or not senha:
+        return jsonify({"error": "email e senha obrigatorios"}), 400
+
+    conn = db.SessionLocal()
+    try:
+        row = conn.execute(text(
+            """SELECT usuario_id, senha FROM usuarios WHERE email = :email"""
+        ),
+        {"email": email},
+        ).mappings().fetchone()#pega o primeiro email encontrado para o usuario
+
+        if not row or not check_password_hash(row["senha"], senha):
+            return jsonify({"error": "senha ou email invalidos"}), 401
+
+        token = create_access_token(identity=str(row["usuario_id"]))
+        return jsonify({"acesso": token}), 200
+    finally:
+        conn.close()
 
 @bp.get("/api/v1/admin/user")
+@jwt_required()
 def listar_usuario():
     listar = db.SessionLocal()
     try:
@@ -26,6 +52,7 @@ def listar_usuario():
         listar.close()
 
 @bp.post("/api/v1/admin/user")
+@jwt_required()
 def create_usuario():
     payload = request.get_json() or {}
     nome = payload.get("nome")
@@ -72,6 +99,7 @@ def create_usuario():
         return jsonify({"mensagem": "usuario criado com sucesso!"}), 201
 
 @bp.post("/api/v1/admin/cliente")
+@jwt_required()
 def create_cliente():
     payload = request.get_json() or {}
 
@@ -138,6 +166,7 @@ def create_cliente():
         conn.close()
 
 @bp.get("/api/v1/admin/cliente")
+@jwt_required()
 def listar_clientes():
     conn = db.SessionLocal()
 
@@ -153,3 +182,5 @@ def listar_clientes():
 
     finally:
         conn.close()
+
+
