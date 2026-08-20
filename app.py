@@ -4,6 +4,7 @@ from db import SessionLocal, engine, Base
 from models.clientes import Cliente
 from models.usuarios import Usuario, Role
 from models.consultas import Consulta
+from models.lembrete import Template, Lembrete
 from api.admin import bp as admin
 
 app = Flask(__name__)

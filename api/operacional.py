@@ -17,16 +17,25 @@ def listar_consultas():
                 SELECT c.nome, retorno, horario, tipo_consulta, status FROM consultas JOIN cliente AS c ON consultas.id_cliente = c.id_cliente
             """
         ))
-        consultas = [dict(row) for row in resultado.mappings()]
+        consultas = []
+
+        for row in resultado.mappings():
+            item = dict(row)
+            if item.get("horario"):
+                item["horario"] = str(item["horario"])
+            if item.get("retorno"):
+                item["retorno"] = item["retorno"].isoformat()
+            consultas.append(item)
+
         
+
         if not consultas:
             return jsonify({"error": "nenhuma consulta encontrada"}),404
 
-        return jsonify (consultas)
-
+        return jsonify(consultas)    
     finally:
         conn.close()
-
+        
 @bp.post("/api/v1/operacional/consultas")
 def create_consulta():
     
@@ -37,18 +46,18 @@ def create_consulta():
     tipo_consulta = payload.get("tipo_consulta")
     status = payload.get("status")
     observacao = payload.get("observacao")
-    retorno = payload.get("retorno")
+    retorno = payload.get("retorno") #data de retorno 
     horario = payload.get("horario")
     create_data = datetime.now()
 
-    if not profissional_responsavel or not tipo_consulta or not retorno or not horario:
-        return jsonify({"error": "campos obrigatorios faltantes"})
+    if not profissional_responsavel or not tipo_consulta or not retorno or not horario or not status:
+        return jsonify({"error": "campos obrigatorios faltantes"}), 400
 
     try:
         conn = SessionLocal()
         conn.execute(text(
             """
-                INSERT INTO consultas (id_cliente ,profissional_responsavel, tipo_consulta, status, observacao, retorno, horario)VALUES(:id_cliente, :profissional_responsavel, :tipo_consulta, :status, :observacao, :retorno, :horario)
+                INSERT INTO consultas (id_cliente ,profissional_responsavel, tipo_consulta, status, observacao, retorno, horario, create_data)VALUES(:id_cliente, :profissional_responsavel, :tipo_consulta, :status, :observacao, :retorno, :horario, :create_data)
             """
                 ),
                 {
@@ -67,20 +76,63 @@ def create_consulta():
     finally:
         conn.close()
 
+@bp.patch("/api/v1/operacional/<int:id_consulta>/consultas")
+def atualizar_consultas(id_consulta):
+    data = request.get_json() or {}
+ 
+    atualizar = (
+        "profissional_responsavel",
+        "tipo_consulta",
+        "status",
+        "observacao",
+        "retorno",
+        "horario",
+    )
+    campos = {k: data.get(k) for k in atualizar if k in data}
+ 
+ 
+    if not campos:
+        return jsonify({"error": "nenhum item atualizado"}), 400
+
+    campos_atualizar = ", ".join(f"{col} = :{col}" for col in campos) 
+    parametros = {**campos, "id_consulta": id_consulta, "update_data" :datetime.now()}
+    
+    try:
+        conn = SessionLocal()
+        resultado = conn.execute(text(
+            f"""
+                UPDATE consultas
+                SET {campos_atualizar},
+                update_data = :update_data
+                WHERE id_consulta = :id_consulta
+            """
+        ),
+        parametros)
+
+        if resultado.rowcount == 0:
+            return jsonify({"error": "consulta nao encontrada"}),404
+    
+        conn.commit()
+        return jsonify({"sucesso": "consulta atualizada com sucesso!"})
+
+
+    finally:
+        conn.close()
+
 @bp.get("/api/v1/operacional/template")
 def listar_mensagens():
     conn= SessionLocal()
 
     try:   
-        resultado = conn.execute(
+        resultado = conn.execute(text(
             """ 
                 SELECT titulo, conteudo FROM template;
             """
-        )
+        ))
 
         consulta = [dict(row) for row in resultado.mappings()]
         if not consulta:
-            return jsonify({"erro": "nenhuma mensagem cadastrada"})
+            return jsonify({"erro": "nenhuma mensagem cadastrada"}), 404
 
         return jsonify(consulta)
 
@@ -95,13 +147,14 @@ def create_mensagem():
     conteudo = data.get("conteudo")
     create_data = datetime.now()
 
+    conn = SessionLocal()
     try:
         if not titulo or not conteudo: 
-            return jsonify({"error": "dados faltantes"})
+            return jsonify({"error": "dados faltantes"}), 400
 
-        conn = SessionLocal()
+        
 
-        conn.execute(text(
+        resultado = conn.execute(text(
             """
                 INSERT INTO template (titulo, conteudo, create_data) 
                 VALUES(:titulo, :conteudo, :create_data);
@@ -114,31 +167,74 @@ def create_mensagem():
         },
         )
         conn.commit()
-        return jsonify({"mensagem": "mensagem criada com sucesso!"}), 201
+        return jsonify({"sucesso": "mensagem criada com sucesso!"}), 201
 
 
     finally:
         conn.close()
-
     
 @bp.patch("/api/v1/operacional/<int:id_mensagem>/template")
-# def concluir_retorno(caso_id, retorno_id):
 def atualizar_mensagem(id_mensagem):
-    data = request.get_json()
-
-    id_mensagem = data.get("id_mensagem")
+    data = request.get_json() or {}
+    if data != data.get("titulo") or data.get("conteudo"):
+        return jsonify({"error": "dados errados"}), 400
     titulo = data.get("titulo")
     conteudo = data.get("conteudo")  
+    update_data = datetime.now()
 
     try:
         conn = SessionLocal()
-        if titulo:
-            conn.execute(text(
+        if titulo is not None:
+            resultados =conn.execute(text(
             """
-                UPDATE template SET titulo = :titulo WHERE id_mensagem = :id_mensagem
+                UPDATE template 
+                SET titulo = :titulo,
+                update_data = :update_data
+                WHERE id_mensagem = :id_mensagem
             """
         ),
         {
             "titulo": titulo,
-            "id_mensagem": id_mensagem
+            "id_mensagem": id_mensagem,
+            "update_data": update_data
         })
+        if conteudo is not None:
+          resultados = conn.execute(text(
+            """
+                UPDATE template 
+                SET conteudo = :conteudo, 
+                update_data = :update_data
+                WHERE id_mensagem = :id_mensagem
+            """
+        ),
+        {
+            "conteudo": conteudo,
+            "id_mensagem": id_mensagem,
+            "update_data": update_data
+        })
+        if resultados.rowcount == 0:
+            return jsonify({"error": "mensagem nao encontrada"}), 404
+        
+        if titulo is None and conteudo is None:
+            return jsonify({"error": "nenhum campo para atualizar"}), 400 
+
+        conn.commit()
+        return jsonify({"mensagem": "mensagem atualizada com sucesso!"}), 200
+         
+    finally:
+        conn.close()
+
+@bp.delete("/api/v1/operacional/<int:id_mensagem>/template")
+def deletar_template(id_mensagem):
+    conn = SessionLocal()
+    conn.execute(text(
+        f"""DELETE FROM template
+        WHERE id_mensagem = {id_mensagem}"""
+    ))
+    conn.commit()
+    conn.close()
+    return jsonify({"sucesso": "Template excluido com sucesso!"}), 200
+    
+
+
+
