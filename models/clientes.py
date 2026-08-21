@@ -1,4 +1,4 @@
-from sqlalchemy import CHAR, Boolean, Column, Date, Integer, String, VARCHAR
+from sqlalchemy import CHAR, Boolean, Column, Date, Integer, String, VARCHAR, DateTime
 from db import Base
 
 class Cliente(Base):
@@ -28,8 +28,8 @@ class Cliente(Base):
     rua = Column(String(200))
     numero = Column(String(20))
     
-    create_data = Column(Date)
-    update_data = Column(Date)
+    create_data = Column(DateTime)
+    update_data = Column(DateTime)
 
 
 

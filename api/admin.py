@@ -65,39 +65,41 @@ def create_usuario():
     telefone_secundario = payload.get("telefone_secundario")
     senha = payload.get("senha")
     create_data = datetime.now()
+    try:
+        if not nome or not cpf or not email or not senha or not create_data:
+            return jsonify({"error": "campos obrgatorios"}), 400
+        
+        else:
+            senha_hash = generate_password_hash(senha)
+            criar = db.SessionLocal()
+            criar.execute(
+                text(
+            """ 
+                INSERT INTO usuarios
+                    (nome, role_id, cpf, rg, data_nascimento, email, telefone, telefone_secundario, senha, create_data) 
+                VALUES (:nome, :role_id, :cpf, :rg, :data_nascimento, :email,
+                :telefone, :telefone_secundario, :senha, :create_data)
+            """
+            ),
+                {
+                "nome": nome,
+                "role_id": role_id,
+                "cpf": cpf,
+                "rg": rg,
+                "data_nascimento": data_nascimento,
+                "email": email,
+                "telefone": telefone,
+                "telefone_secundario": telefone_secundario,
+                "senha": senha_hash,
+                "create_data": create_data,           
+            },
+            )
+            criar.commit()
+            return jsonify({"mensagem": "usuario criado com sucesso!"}), 201
 
-    if not nome or not cpf or not email or not senha or not create_data:
-        return jsonify({"error": "campos obrgatorios"}), 400
-    
-    else:
-        senha_hash = generate_password_hash(senha)
-        criar = db.SessionLocal()
-        criar.execute(
-            text(
-        """ 
-            INSERT INTO usuarios
-                (nome, role_id, cpf, rg, data_nascimento, email, telefone, telefone_secundario, senha, create_data) 
-            VALUES (:nome, :role_id, :cpf, :rg, :data_nascimento, :email,
-            :telefone, :telefone_secundario, :senha, :create_data)
-        """
-        ),
-            {
-            "nome": nome,
-            "role_id": role_id,
-            "cpf": cpf,
-            "rg": rg,
-            "data_nascimento": data_nascimento,
-            "email": email,
-            "telefone": telefone,
-            "telefone_secundario": telefone_secundario,
-            "senha": senha_hash,
-            "create_data": create_data,           
-        },
-        )
-        criar.commit()
+    finally:
         criar.close()
-        return jsonify({"mensagem": "usuario criado com sucesso!"}), 201
-
+            
 @bp.post("/api/v1/admin/cliente")
 @jwt_required()
 def create_cliente():
@@ -122,7 +124,7 @@ def create_cliente():
     bairro = payload.get("bairro")
     rua = payload.get("rua")
     numero = payload.get('numero')
-    create_data = datetime.now()
+    create_data = datetime.now() 
 
     try:
         if not nome or not email or not telefone:
@@ -159,7 +161,6 @@ def create_cliente():
             },
             )           
             conn.commit()
-            conn.close()
             return jsonify ({"mensage": "cliente criado com sucesso"}), 201
     finally:
 

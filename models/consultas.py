@@ -1,5 +1,5 @@
 import datetime
-from sqlalchemy import ForeignKey, Integer, Column, String, Date, Time
+from sqlalchemy import ForeignKey, Integer, Column, String, Date, Time, DateTime
 from db import Base
 from models.clientes import Cliente
 
@@ -16,5 +16,5 @@ class Consulta(Base):
     retorno = Column(Date)
     horario = Column(Time)
 
-    create_data = Column(Date)
-    update_data = Column(Date)
+    create_data = Column(DateTime)
+    update_data = Column(DateTime)

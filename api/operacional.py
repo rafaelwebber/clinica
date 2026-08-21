@@ -16,7 +16,7 @@ def listar_consultas():
     try:
         resultado = conn.execute(text(
             """
-                SELECT c.nome, retorno, horario, tipo_consulta, status FROM consultas JOIN cliente AS c ON consultas.id_cliente = c.id_cliente
+                SELECT c.nome, retorno, horario, tipo_consulta, status, profissional_responsavel FROM consultas JOIN cliente AS c ON consultas.id_cliente = c.id_cliente
             """
         ))
         consultas = []
@@ -75,7 +75,17 @@ def create_consulta():
                 },)
         
         conn.commit()
-        return jsonify({"mensagem":"consulta criada"}), 201
+        return jsonify({"mensagem":"consulta criada",
+        "consulta": {
+            "profissional_responsavel": profissional_responsavel,
+            "tipo_consulta":tipo_consulta,
+            "status": status,
+            "observacao": observacao,
+            "retorno": retorno,
+            "horario": horario,
+            "id_cliente": id_cliente,
+            "create_data" : create_data
+        }}), 201
     finally:
         conn.close()
 
@@ -117,7 +127,11 @@ def atualizar_consultas(id_consulta):
             return jsonify({"error": "consulta nao encontrada"}),404
     
         conn.commit()
-        return jsonify({"sucesso": "consulta atualizada com sucesso!"})
+        return jsonify({"sucesso": "consulta atualizada com sucesso!",
+        "consulta": {
+            **campos
+            }
+        }), 200
 
 
     finally:
@@ -131,7 +145,7 @@ def listar_mensagens():
     try:   
         resultado = conn.execute(text(
             """ 
-                SELECT titulo, conteudo FROM template;
+                SELECT titulo, conteudo, update_data FROM template;
             """
         ))
 
@@ -173,7 +187,12 @@ def create_mensagem():
         },
         )
         conn.commit()
-        return jsonify({"sucesso": "mensagem criada com sucesso!"}), 201
+        return jsonify({"sucesso": "mensagem criada com sucesso!",
+        "template": {
+            "titulo": titulo,
+            "conteudo": conteudo,
+            "create_data": create_data.isoformat()
+        }}), 201
 
 
     finally:
@@ -183,8 +202,7 @@ def create_mensagem():
 @jwt_required()
 def atualizar_mensagem(id_mensagem):
     data = request.get_json() or {}
-    if data != data.get("titulo") or data.get("conteudo"):
-        return jsonify({"error": "dados errados"}), 400
+
     titulo = data.get("titulo")
     conteudo = data.get("conteudo")  
     update_data = datetime.now()
@@ -226,7 +244,12 @@ def atualizar_mensagem(id_mensagem):
             return jsonify({"error": "nenhum campo para atualizar"}), 400 
 
         conn.commit()
-        return jsonify({"mensagem": "mensagem atualizada com sucesso!"}), 200
+        return jsonify({"mensagem": "mensagem atualizada com sucesso!",
+        "template": {
+            "titulo": titulo,
+            "conteudo": conteudo,
+            "update_data": update_data
+        }}), 200
          
     finally:
         conn.close()
@@ -234,15 +257,16 @@ def atualizar_mensagem(id_mensagem):
 @bp.delete("/api/v1/operacional/<int:id_mensagem>/template")
 @jwt_required()
 def deletar_template(id_mensagem):
-    conn = SessionLocal()
-    conn.execute(text(
-        f"""DELETE FROM template
-        WHERE id_mensagem = {id_mensagem}"""
-    ))
-    conn.commit()
-    conn.close()
-    return jsonify({"sucesso": "Template excluido com sucesso!"}), 200
+    try:
+        conn = SessionLocal()
+        conn.execute(text(
+            f"""DELETE FROM template
+            WHERE id_mensagem = {id_mensagem}"""
+        ))
+        conn.commit()
+        return jsonify({"sucesso": "Template excluido com sucesso!"}), 200
+    finally:
+        conn.close()
     
-
-
+    
 

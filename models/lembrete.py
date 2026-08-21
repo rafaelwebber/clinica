@@ -1,5 +1,5 @@
 from db import Base
-from sqlalchemy import Column, Date, ForeignKey, Integer, String, Time
+from sqlalchemy import Column, Date, ForeignKey, Integer, String, Time, DateTime
 from models.consultas import Consulta
 
 
@@ -12,8 +12,8 @@ class Template(Base):
     titulo = Column(String(50))
     conteudo = Column(String(200))
     
-    create_data = Column(Date)
-    update_data = Column(Date)
+    create_data = Column(DateTime)
+    update_data = Column(DateTime)
 
 
 
@@ -29,8 +29,8 @@ class Lembrete(Base):
     tipo_disparo = Column(String(50))
     status = Column(String(10))
 
-    create_data = Column(Date)
-    update_data = Column(Date)   
+    create_data = Column(DateTime)
+    update_data = Column(DateTime)   
 
 
     

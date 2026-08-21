@@ -1,4 +1,4 @@
-from sqlalchemy import VARCHAR, Date, ForeignKey, Integer, String, Column
+from sqlalchemy import VARCHAR, Date, ForeignKey, Integer, String, Column, DateTime
 from db import Base
 
 
@@ -22,6 +22,6 @@ class Usuario(Base):
     telefone_secundario = Column(VARCHAR(11))
     senha = Column(String(500))
     
-    create_data = Column(Date)
-    update_data = Column(Date)
+    create_data = Column(DateTime)
+    update_data = Column(DateTime)
 
