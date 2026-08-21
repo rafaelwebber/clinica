@@ -269,8 +269,9 @@ def deletar_template(id_mensagem):
         conn = SessionLocal()
         conn.execute(text(
             f"""DELETE FROM template
-            WHERE id_mensagem = {id_mensagem}"""
-        ))
+            WHERE id_mensagem = :id_mensagem"""
+        ),
+        {"id_mensagem": id_mensagem})
         conn.commit()
         return jsonify({"sucesso": "Template excluido com sucesso!"}), 200
     finally:
