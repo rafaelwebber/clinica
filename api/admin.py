@@ -1,42 +1,104 @@
 from datetime import datetime
-from flask import Flask, request, Blueprint, jsonify
-from sqlalchemy.engine import row
+from flask import Blueprint, jsonify, request
+from flask_jwt_extended import (
+    create_access_token,
+    create_refresh_token,
+    get_jwt,
+    get_jwt_identity,
+    jwt_required,
+)
 from sqlalchemy.sql import text
 from werkzeug.security import check_password_hash, generate_password_hash
 import db
-from flask_jwt_extended import create_access_token, jwt_required
-
+from services.auth_security import (
+    ROLE_ADMIN,
+    limpar_falhas_login,
+    login_bloqueado,
+    registrar_falha_login,
+    revogar_token,
+    role_required,
+)
 
 bp = Blueprint("admin", __name__)
 
-@bp.post("/api/v1/admin/login")    
+
+@bp.post("/api/v1/admin/login")
 def login():
     data = request.get_json() or {}
-    
-    email = data.get("email")
+    email = (data.get("email") or "").strip()
     senha = data.get("senha")
+    ip = request.remote_addr or "unknown"
 
     if not email or not senha:
         return jsonify({"error": "email e senha obrigatorios"}), 400
 
+    bloqueado, segundos = login_bloqueado(ip, email)
+    if bloqueado:
+        return jsonify({
+            "error": "muitas tentativas. tente novamente mais tarde",
+            "retry_after_segundos": segundos,
+        }), 429
+
     conn = db.SessionLocal()
     try:
-        row = conn.execute(text(
-            """SELECT usuario_id, senha FROM usuarios WHERE email = :email"""
-        ),
-        {"email": email},
-        ).mappings().fetchone()#pega o primeiro email encontrado para o usuario
+        row = conn.execute(
+            text("SELECT usuario_id, role_id, senha FROM usuarios WHERE email = :email"),
+            {"email": email},
+        ).mappings().fetchone()
 
         if not row or not check_password_hash(row["senha"], senha):
+            ficou_bloqueado, lock_segundos = registrar_falha_login(ip, email)
+            if ficou_bloqueado:
+                return jsonify({
+                    "error": "muitas tentativas. tente novamente mais tarde",
+                    "retry_after_segundos": lock_segundos,
+                }), 429
             return jsonify({"error": "senha ou email invalidos"}), 401
 
-        token = create_access_token(identity=str(row["usuario_id"]))
-        return jsonify({"acesso": token}), 200
+        limpar_falhas_login(ip, email)
+        identity = str(row["usuario_id"])
+        claims = {"role_id": row["role_id"]}
+        access = create_access_token(identity=identity, additional_claims=claims)
+        refresh = create_refresh_token(identity=identity, additional_claims=claims)
+
+        return jsonify({
+            "acesso": access,
+            "refresh": refresh,
+            "token_type": "Bearer",
+            "expires_in_minutos": 15,
+        }), 200
     finally:
         conn.close()
 
+
+@bp.post("/api/v1/admin/refresh")
+@jwt_required(refresh=True)
+def refresh():
+    """Troca o refresh atual por access + refresh novos (rotação)."""
+    user_id = get_jwt_identity()
+    claims = {"role_id": get_jwt().get("role_id")}
+    revogar_token(get_jwt()["jti"])
+    novo_access = create_access_token(identity=user_id, additional_claims=claims)
+    novo_refresh = create_refresh_token(identity=user_id, additional_claims=claims)
+    return jsonify({
+        "acesso": novo_access,
+        "refresh": novo_refresh,
+        "token_type": "Bearer",
+        "expires_in_minutos": 15,
+    }), 200
+
+
+@bp.post("/api/v1/admin/logout")
+@jwt_required(verify_type=False)
+def logout():
+
+    revogar_token(get_jwt()["jti"])
+    return jsonify({"mensagem": "logout realizado"}), 200
+
+
 @bp.get("/api/v1/admin/user")
 @jwt_required()
+@role_required(ROLE_ADMIN)
 def listar_usuario():
     listar = db.SessionLocal()
     try:
@@ -53,6 +115,7 @@ def listar_usuario():
 
 @bp.post("/api/v1/admin/user")
 @jwt_required()
+@role_required(ROLE_ADMIN)
 def create_usuario():
     payload = request.get_json() or {}
     nome = payload.get("nome")
@@ -102,6 +165,7 @@ def create_usuario():
             
 @bp.post("/api/v1/admin/cliente")
 @jwt_required()
+@role_required(ROLE_ADMIN)
 def create_cliente():
     payload = request.get_json() or {}
 
@@ -168,6 +232,7 @@ def create_cliente():
 
 @bp.get("/api/v1/admin/cliente")
 @jwt_required()
+@role_required(ROLE_ADMIN)
 def listar_clientes():
     conn = db.SessionLocal()
 

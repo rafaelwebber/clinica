@@ -4,12 +4,14 @@ from flask_jwt_extended import jwt_required
 from sqlalchemy import text
 from db import SessionLocal
 from services.helpers import buscar_id
+from services.auth_security import ROLE_ADMIN, ROLE_OPERACIONAL, role_required
 
 bp = Blueprint("operacional", __name__)
 
 
 @bp.get("/api/v1/operacional/consultas")
 @jwt_required()
+@role_required(ROLE_ADMIN, ROLE_OPERACIONAL)
 def listar_consultas():
     conn = SessionLocal()
 
@@ -40,6 +42,7 @@ def listar_consultas():
         
 @bp.post("/api/v1/operacional/consultas")
 @jwt_required()
+@role_required(ROLE_ADMIN, ROLE_OPERACIONAL)
 def create_consulta():
     
     payload = request.get_json() or {}
@@ -91,6 +94,7 @@ def create_consulta():
 
 @bp.patch("/api/v1/operacional/<int:id_consulta>/consultas")
 @jwt_required()
+@role_required(ROLE_ADMIN, ROLE_OPERACIONAL)
 def atualizar_consultas(id_consulta):
     data = request.get_json() or {}
  
@@ -139,6 +143,7 @@ def atualizar_consultas(id_consulta):
 
 @bp.get("/api/v1/operacional/template")
 @jwt_required()
+@role_required(ROLE_ADMIN, ROLE_OPERACIONAL)
 def listar_mensagens():
     conn= SessionLocal()
 
@@ -160,6 +165,7 @@ def listar_mensagens():
 
 @bp.post("/api/v1/operacional/template")
 @jwt_required()
+@role_required(ROLE_ADMIN, ROLE_OPERACIONAL)
 def create_mensagem():
     data = request.get_json() or {}
 
@@ -200,6 +206,7 @@ def create_mensagem():
     
 @bp.patch("/api/v1/operacional/<int:id_mensagem>/template")
 @jwt_required()
+@role_required(ROLE_ADMIN, ROLE_OPERACIONAL)
 def atualizar_mensagem(id_mensagem):
     data = request.get_json() or {}
 
@@ -256,6 +263,7 @@ def atualizar_mensagem(id_mensagem):
 
 @bp.delete("/api/v1/operacional/<int:id_mensagem>/template")
 @jwt_required()
+@role_required(ROLE_ADMIN, ROLE_OPERACIONAL)
 def deletar_template(id_mensagem):
     try:
         conn = SessionLocal()
