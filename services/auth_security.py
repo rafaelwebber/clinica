@@ -2,6 +2,7 @@ from collections import defaultdict
 from datetime import datetime, timedelta
 from functools import wraps
 from threading import Lock
+import re 
 
 from flask import jsonify
 from flask_jwt_extended import get_jwt, verify_jwt_in_request
@@ -84,3 +85,16 @@ def token_na_blocklist(jti: str) -> bool:
 
 def revogar_token(jti: str) -> None:
     TOKEN_BLOCKLIST.add(jti)
+
+def validar_senha(senha: str) -> bool:
+    if len(senha) < 8:
+        return False
+    if not re.search(r'[A-Z]', senha):
+        return False
+    if not re.search(r'[a-z]', senha):
+        return False
+    if not re.search(r'[0-9]', senha):
+        return False
+    if not re.search(r'[^a-zA-Z0-9]', senha):
+        return False
+    return True #senha valida

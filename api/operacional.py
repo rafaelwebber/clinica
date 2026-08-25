@@ -48,12 +48,12 @@ def create_consulta():
     payload = request.get_json() or {}
 
     id_cliente = payload.get("id_cliente")
-    profissional_responsavel = payload.get("profissional_responsavel")
-    tipo_consulta = payload.get("tipo_consulta")
-    status = payload.get("status")
-    observacao = payload.get("observacao")
-    retorno = payload.get("retorno") #data de retorno 
-    horario = payload.get("horario")
+    profissional_responsavel = payload.get("profissional_responsavel").strip()
+    tipo_consulta = payload.get("tipo_consulta").strip()
+    status = payload.get("status").strip()
+    observacao = payload.get("observacao").strip()
+    retorno = payload.get("retorno").strip() #data de retorno 
+    horario = payload.get("horario").strip()
     create_data = datetime.now()
 
     if not profissional_responsavel or not tipo_consulta or not retorno or not horario or not status:
@@ -106,7 +106,7 @@ def atualizar_consultas(id_consulta):
         "retorno",
         "horario",
     )
-    campos = {k: data.get(k) for k in atualizar if k in data}
+    campos = {k: data.get(k).strip() for k in atualizar if k in data}
  
  
     if not campos:
@@ -169,8 +169,8 @@ def listar_mensagens():
 def create_mensagem():
     data = request.get_json() or {}
 
-    titulo = data.get("titulo")
-    conteudo = data.get("conteudo")
+    titulo = data.get("titulo").strip()
+    conteudo = data.get("conteudo").strip()
     create_data = datetime.now()
 
     conn = SessionLocal()
@@ -180,7 +180,7 @@ def create_mensagem():
 
         
 
-        resultado = conn.execute(text(
+        conn.execute(text(
             """
                 INSERT INTO template (titulo, conteudo, create_data) 
                 VALUES(:titulo, :conteudo, :create_data);
@@ -210,8 +210,8 @@ def create_mensagem():
 def atualizar_mensagem(id_mensagem):
     data = request.get_json() or {}
 
-    titulo = data.get("titulo")
-    conteudo = data.get("conteudo")  
+    titulo = data.get("titulo").strip()
+    conteudo = data.get("conteudo").strip()  
     update_data = datetime.now()
 
     try:
