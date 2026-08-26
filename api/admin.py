@@ -133,7 +133,7 @@ def create_usuario():
     criar = db.SessionLocal()
     try:
         if not nome or not cpf or not email or not senha or not create_data:
-            return jsonify({"error": "campos obrgatorios"}), 400
+            return jsonify({"error": "campos obrigatorios não preenchidos"}), 409
 
         if not validar_senha(senha):
             return jsonify({"error": "senha tem que conter pelo menos 8 Caracteres, uma letra maiuscula, uma letra minuscula, um numero e um caracter especial"}), 400
@@ -199,7 +199,7 @@ def update_usuario(user_id):
                     "senha tem que conter pelo menos 8 Caracteres, uma letra maiuscula, "
                     "uma letra minuscula, um numero e um caracter especial"
                 )
-            }), 400
+            }), 409
         campos["senha"] = generate_password_hash(senha)
 
     if not campos:

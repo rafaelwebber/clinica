@@ -18,11 +18,10 @@ class Template(Base):
 
 
 class Lembrete(Base):
-    __tablename__ = "Lembrete"
+    __tablename__ = "lembrete"
 
     id_lembrete = Column(Integer, primary_key=True)
     id_mensagem = Column(Integer, ForeignKey(Template.id_mensagem), nullable=False)
-    id_consulta = Column(Integer, ForeignKey(Consulta.id_consulta), nullable=False)
 
     data_disparo = Column(Date)
     horario_disparo = Column(Time)
