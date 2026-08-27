@@ -10,6 +10,7 @@ from api.admin import bp as admin
 from api.operacional import bp as operacional
 from db import Base, engine
 from models.clientes import Cliente
+from models.clinicas import Clinica
 from models.consultas import Consulta
 from models.lembrete import Lembrete, Template
 from models.usuarios import Role, TokenRevogado, Usuario

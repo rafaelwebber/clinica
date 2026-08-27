@@ -1,13 +1,14 @@
 from sqlalchemy import Column, Date, DateTime, ForeignKey, Integer, String, Time
 from db import Base
 from models.clientes import Cliente
+from models.clinicas import Clinica
 
 class Consulta(Base):
     __tablename__ = "consultas"
 
     id_consulta = Column(Integer, primary_key=True)
     id_cliente = Column(Integer, ForeignKey(Cliente.id_cliente), nullable=False)
-
+    id_clinica = Column(Integer, ForeignKey(Clinica.id_clinica), nullable=False)
     profissional_responsavel = Column(String(100))
     tipo_consulta = Column(String(50))
     status = Column(String(50))
