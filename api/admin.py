@@ -28,10 +28,10 @@ from services.helpers import (
     vazio_para_none,
 )
 
-bp = Blueprint("admin", __name__)
+bp = Blueprint("admin", __name__, url_prefix="/api/v1/admin")
 
 
-@bp.post("/api/v1/admin/login")
+@bp.post("/login")
 def login():
     data = request.get_json() or {}
     email = texto(data.get("email"))
@@ -80,7 +80,7 @@ def login():
         conn.close()
 
 
-@bp.post("/api/v1/admin/refresh")
+@bp.post("/refresh")
 @jwt_required(refresh=True)
 def refresh():
     user_id = get_jwt_identity()
@@ -99,14 +99,14 @@ def refresh():
     }), 200
 
 
-@bp.post("/api/v1/admin/logout")
+@bp.post("/logout")
 @jwt_required(verify_type=False)
 def logout():
     revogar_token(get_jwt()["jti"])
     return jsonify({"mensagem": "logout realizado"}), 200
 
 
-@bp.get("/api/v1/admin/user")
+@bp.get("/usuarios")
 @jwt_required()
 @role_required(ROLE_ADMIN)
 def listar_usuario():
@@ -125,7 +125,7 @@ def listar_usuario():
         conn.close()
 
 
-@bp.post("/api/v1/admin/user")
+@bp.post("/usuarios")
 @jwt_required()
 @role_required(ROLE_ADMIN)
 def create_usuario():
@@ -193,7 +193,7 @@ def create_usuario():
         conn.close()
 
 
-@bp.patch("/api/v1/admin/user/<int:user_id>")
+@bp.patch("/usuarios/<int:user_id>")
 @jwt_required()
 @role_required(ROLE_ADMIN)
 def update_usuario(user_id):
@@ -256,7 +256,7 @@ def update_usuario(user_id):
         conn.close()
 
 
-@bp.post("/api/v1/admin/clientes")
+@bp.post("/clientes")
 @jwt_required()
 @role_required(ROLE_ADMIN)
 def create_cliente():
@@ -322,7 +322,7 @@ def create_cliente():
         conn.close()
 
 
-@bp.get("/api/v1/admin/clientes")
+@bp.get("/clientes")
 @jwt_required()
 @role_required(ROLE_ADMIN)
 def listar_clientes():
@@ -335,7 +335,7 @@ def listar_clientes():
         conn.close()
 
 
-@bp.patch("/api/v1/admin/clientes/<int:cliente_id>")
+@bp.patch("/clientes/<int:cliente_id>")
 @jwt_required()
 @role_required(ROLE_ADMIN)
 def update_cliente(cliente_id):

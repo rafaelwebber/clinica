@@ -7,14 +7,14 @@ from db import SessionLocal
 from services.auth_security import ROLE_ADMIN, ROLE_OPERACIONAL, role_required
 from services.helpers import agora_sp, normalizar_campo, serializar_item, texto, vazio_para_none
 
-bp = Blueprint("operacional", __name__)
+bp = Blueprint("operacional", __name__, url_prefix="/api/v1/operacional")
 
 
 def _campos_patch(data, permitidos):
     return {k: normalizar_campo(data.get(k)) for k in permitidos if k in data}
 
 
-@bp.get("/api/v1/operacional/consultas")
+@bp.get("/consultas")
 @jwt_required()
 @role_required(ROLE_ADMIN, ROLE_OPERACIONAL)
 def listar_consultas():
@@ -34,7 +34,7 @@ def listar_consultas():
         conn.close()
 
 
-@bp.get("/api/v1/operacional/<int:id_consulta>/consultas")
+@bp.get("/consultas/<int:id_consulta>")
 @jwt_required()
 @role_required(ROLE_ADMIN, ROLE_OPERACIONAL)
 def buscar_consulta(id_consulta):
@@ -57,7 +57,7 @@ def buscar_consulta(id_consulta):
         conn.close()
 
 
-@bp.post("/api/v1/operacional/consultas")
+@bp.post("/consultas")
 @jwt_required()
 @role_required(ROLE_ADMIN, ROLE_OPERACIONAL)
 def create_consulta():
@@ -118,7 +118,7 @@ def create_consulta():
         conn.close()
 
 
-@bp.patch("/api/v1/operacional/<int:id_consulta>/consultas")
+@bp.patch("/consultas/<int:id_consulta>")
 @jwt_required()
 @role_required(ROLE_ADMIN, ROLE_OPERACIONAL)
 def atualizar_consultas(id_consulta):
@@ -161,7 +161,7 @@ def atualizar_consultas(id_consulta):
         conn.close()
 
 
-@bp.get("/api/v1/operacional/template")
+@bp.get("/templates")
 @jwt_required()
 @role_required(ROLE_ADMIN, ROLE_OPERACIONAL)
 def listar_mensagens():
@@ -176,7 +176,7 @@ def listar_mensagens():
         conn.close()
 
 
-@bp.post("/api/v1/operacional/template")
+@bp.post("/templates")
 @jwt_required()
 @role_required(ROLE_ADMIN, ROLE_OPERACIONAL)
 def create_mensagem():
@@ -213,7 +213,7 @@ def create_mensagem():
         conn.close()
 
 
-@bp.patch("/api/v1/operacional/<int:id_mensagem>/template")
+@bp.patch("/templates/<int:id_mensagem>")
 @jwt_required()
 @role_required(ROLE_ADMIN, ROLE_OPERACIONAL)
 def atualizar_mensagem(id_mensagem):
@@ -249,7 +249,7 @@ def atualizar_mensagem(id_mensagem):
         conn.close()
 
 
-@bp.delete("/api/v1/operacional/<int:id_mensagem>/template")
+@bp.delete("/templates/<int:id_mensagem>")
 @jwt_required()
 @role_required(ROLE_ADMIN, ROLE_OPERACIONAL)
 def deletar_template(id_mensagem):
@@ -270,7 +270,7 @@ def deletar_template(id_mensagem):
         conn.close()
 
 
-@bp.get("/api/v1/operacional/lembrete")
+@bp.get("/lembretes")
 @jwt_required()
 @role_required(ROLE_ADMIN, ROLE_OPERACIONAL)
 def listar_lembretes():
@@ -283,7 +283,7 @@ def listar_lembretes():
         conn.close()
 
 
-@bp.post("/api/v1/operacional/lembrete")
+@bp.post("/lembretes")
 @jwt_required()
 @role_required(ROLE_ADMIN, ROLE_OPERACIONAL)
 def create_lembrete():
@@ -336,7 +336,7 @@ def create_lembrete():
         conn.close()
 
 
-@bp.patch("/api/v1/operacional/<int:id_lembrete>/lembrete")
+@bp.patch("/lembretes/<int:id_lembrete>")
 @jwt_required()
 @role_required(ROLE_ADMIN, ROLE_OPERACIONAL)
 def atualizar_lembrete(id_lembrete):
@@ -381,7 +381,7 @@ def atualizar_lembrete(id_lembrete):
         conn.close()
 
 
-@bp.delete("/api/v1/operacional/<int:id_lembrete>/lembrete")
+@bp.delete("/lembretes/<int:id_lembrete>")
 @jwt_required()
 @role_required(ROLE_ADMIN, ROLE_OPERACIONAL)
 def deletar_lembrete(id_lembrete):
@@ -399,7 +399,7 @@ def deletar_lembrete(id_lembrete):
         conn.close()
 
 
-@bp.get("/api/v1/operacional/promocoes")
+@bp.get("/promocoes")
 @jwt_required()
 @role_required(ROLE_ADMIN, ROLE_OPERACIONAL)
 def listar_promocoes():
@@ -412,7 +412,7 @@ def listar_promocoes():
         conn.close()
 
 
-@bp.post("/api/v1/operacional/promocoes")
+@bp.post("/promocoes")
 @jwt_required()
 @role_required(ROLE_ADMIN, ROLE_OPERACIONAL)
 def create_promocoes():
@@ -465,7 +465,7 @@ def create_promocoes():
         conn.close()
 
 
-@bp.patch("/api/v1/operacional/<int:id_promocao>/promocoes")
+@bp.patch("/promocoes/<int:id_promocao>")
 @jwt_required()
 @role_required(ROLE_ADMIN, ROLE_OPERACIONAL)
 def atualizar_promocoes(id_promocao):
@@ -506,3 +506,9 @@ def atualizar_promocoes(id_promocao):
         }), 200
     finally:
         conn.close()
+
+
+@bp.delete("/promocoes/<int:id_promocao>")
+@jwt_required()
+@role_required(ROLE_ADMIN, ROLE_OPERACIONAL)
+def deletar_promocao(id_promocao):
