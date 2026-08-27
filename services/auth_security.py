@@ -1,11 +1,12 @@
 from collections import defaultdict
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from functools import wraps
 from threading import Lock
-import re 
-
+import re
 from flask import jsonify
 from flask_jwt_extended import get_jwt, verify_jwt_in_request
+from sqlalchemy import text
+from db import SessionLocal
 
 TOKEN_BLOCKLIST = set()
 
@@ -27,6 +28,10 @@ def role_required(*roles_permitidos):
         def wrapper(*args, **kwargs):
             verify_jwt_in_request()
             role_id = get_jwt().get("role_id")
+            try:
+                role_id = int(role_id)
+            except (TypeError, ValueError):
+                return jsonify({"error": "acesso negado"}), 403
             if role_id not in roles_permitidos:
                 return jsonify({"error": "acesso negado"}), 403
             return fn(*args, **kwargs)
@@ -35,12 +40,12 @@ def role_required(*roles_permitidos):
 
 
 def _chave(ip: str, email: str) -> str:
-    return f"{ip or 'unknown'}|{ (email or '').strip().lower() }"
+    return f"{ip or 'unknown'}|{(email or '').strip().lower()}"
 
 
 def login_bloqueado(ip: str, email: str) -> tuple[bool, int]:
     key = _chave(ip, email)
-    agora = datetime.utcnow()
+    agora = datetime.now(timezone.utc)
 
     with _lock:
         ate = _bloqueios.get(key)
@@ -54,13 +59,10 @@ def login_bloqueado(ip: str, email: str) -> tuple[bool, int]:
 
 def registrar_falha_login(ip: str, email: str) -> tuple[bool, int]:
     key = _chave(ip, email)
-    agora = datetime.utcnow()
+    agora = datetime.now(timezone.utc)
 
     with _lock:
-        recentes = [
-            t for t in _tentativas[key]
-            if agora - t < _JANELA
-        ]
+        recentes = [t for t in _tentativas[key] if agora - t < _JANELA]
         recentes.append(agora)
         _tentativas[key] = recentes
 
@@ -80,21 +82,48 @@ def limpar_falhas_login(ip: str, email: str) -> None:
 
 
 def token_na_blocklist(jti: str) -> bool:
-    return jti in TOKEN_BLOCKLIST
+    if jti in TOKEN_BLOCKLIST:
+        return True
+
+    conn = SessionLocal()
+    try:
+        row = conn.execute(
+            text("SELECT jti FROM token_revogado WHERE jti = :jti"),
+            {"jti": jti},
+        ).first()
+        if row:
+            TOKEN_BLOCKLIST.add(jti)
+            return True
+        return False
+    finally:
+        conn.close()
 
 
 def revogar_token(jti: str) -> None:
     TOKEN_BLOCKLIST.add(jti)
+    conn = SessionLocal()
+    try:
+        conn.execute(
+            text(
+                "INSERT IGNORE INTO token_revogado (jti, criado_em) "
+                "VALUES (:jti, :criado_em)"
+            ),
+            {"jti": jti, "criado_em": datetime.now(timezone.utc).replace(tzinfo=None)},
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
 
 def validar_senha(senha: str) -> bool:
     if len(senha) < 8:
         return False
-    if not re.search(r'[A-Z]', senha):
+    if not re.search(r"[A-Z]", senha):
         return False
-    if not re.search(r'[a-z]', senha):
+    if not re.search(r"[a-z]", senha):
         return False
-    if not re.search(r'[0-9]', senha):
+    if not re.search(r"[0-9]", senha):
         return False
-    if not re.search(r'[^a-zA-Z0-9]', senha):
+    if not re.search(r"[^a-zA-Z0-9]", senha):
         return False
-    return True #senha valida
+    return True

@@ -1,10 +1,9 @@
-import datetime
-from sqlalchemy import ForeignKey, Integer, Column, String, Date, Time, DateTime
+from sqlalchemy import Column, Date, DateTime, ForeignKey, Integer, String, Time
 from db import Base
 from models.clientes import Cliente
 
 class Consulta(Base):
-    __tablename__ ="consultas"
+    __tablename__ = "consultas"
 
     id_consulta = Column(Integer, primary_key=True)
     id_cliente = Column(Integer, ForeignKey(Cliente.id_cliente), nullable=False)
@@ -12,7 +11,7 @@ class Consulta(Base):
     profissional_responsavel = Column(String(100))
     tipo_consulta = Column(String(50))
     status = Column(String(50))
-    observacao= Column(String(200))
+    observacao = Column(String(200))
     retorno = Column(Date)
     horario = Column(Time)
 

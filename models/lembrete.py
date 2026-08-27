@@ -1,20 +1,16 @@
+from sqlalchemy import Column, Date, DateTime, ForeignKey, Integer, String, Time
 from db import Base
-from sqlalchemy import Column, Date, ForeignKey, Integer, String, Time, DateTime
-from models.consultas import Consulta
-
 
 
 class Template(Base):
-    __tablename__= "template"
+    __tablename__ = "template"
 
     id_mensagem = Column(Integer, primary_key=True)
-    
     titulo = Column(String(50))
-    conteudo = Column(String(200))
-    
+    conteudo = Column(String(2000))
+
     create_data = Column(DateTime)
     update_data = Column(DateTime)
-
 
 
 class Lembrete(Base):
@@ -26,10 +22,7 @@ class Lembrete(Base):
     data_disparo = Column(Date)
     horario_disparo = Column(Time)
     tipo_disparo = Column(String(50))
-    status = Column(String(10))
+    status = Column(String(20))
 
     create_data = Column(DateTime)
-    update_data = Column(DateTime)   
-
-
-    
+    update_data = Column(DateTime)
