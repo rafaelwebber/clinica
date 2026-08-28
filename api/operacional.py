@@ -33,11 +33,13 @@ def listar_consultas():
     try:
         resultado = conn.execute(text(
             """
-            SELECT consultas.id_consulta, consultas.id_clinica, c.nome, retorno, horario,
-                   tipo_consulta, status, profissional_responsavel, consultas.observacao
+            SELECT consultas.id_consulta, consultas.id_cliente, c.nome, retorno, horario,
+                   tipo_consulta, status, profissional_responsavel, consultas.observacao,
+                   consultas.create_data, consultas.update_data
             FROM consultas
             JOIN cliente AS c ON consultas.id_cliente = c.id_cliente
             WHERE consultas.id_clinica = :id_clinica
+            ORDER BY retorno DESC, horario DESC
             """
         ), {"id_clinica": id_clinica})
         consultas = [serializar_item(dict(row)) for row in resultado.mappings()]
@@ -58,8 +60,9 @@ def buscar_consulta(id_consulta):
     try:
         resultado = conn.execute(text(
             """
-            SELECT consultas.id_consulta, consultas.id_clinica, c.nome, retorno, horario,
-                   tipo_consulta, status, profissional_responsavel, consultas.observacao
+            SELECT consultas.id_consulta, consultas.id_cliente, c.nome, retorno, horario,
+                   tipo_consulta, status, profissional_responsavel, consultas.observacao,
+                   consultas.create_data, consultas.update_data
             FROM consultas
             JOIN cliente AS c ON consultas.id_cliente = c.id_cliente
             WHERE consultas.id_consulta = :id_consulta
@@ -216,9 +219,10 @@ def listar_mensagens():
     try:
         resultado = conn.execute(text(
             """
-            SELECT id_mensagem, id_clinica, titulo, conteudo, create_data, update_data
+            SELECT id_mensagem, titulo, conteudo, create_data, update_data
             FROM template
             WHERE id_clinica = :id_clinica
+            ORDER BY id_mensagem DESC
             """
         ), {"id_clinica": id_clinica})
         templates = [serializar_item(dict(row)) for row in resultado.mappings()]
@@ -355,7 +359,17 @@ def listar_lembretes():
     conn = SessionLocal()
     try:
         resultado = conn.execute(
-            text("SELECT * FROM lembrete WHERE id_clinica = :id_clinica"),
+            text(
+                """
+                SELECT l.id_lembrete, l.id_mensagem, t.titulo AS template_titulo,
+                       l.data_disparo, l.horario_disparo, l.tipo_disparo, l.status,
+                       l.create_data, l.update_data
+                FROM lembrete AS l
+                LEFT JOIN template AS t ON t.id_mensagem = l.id_mensagem
+                WHERE l.id_clinica = :id_clinica
+                ORDER BY l.data_disparo DESC, l.horario_disparo DESC
+                """
+            ),
             {"id_clinica": id_clinica},
         )
         lembretes = [serializar_item(dict(row)) for row in resultado.mappings()]
@@ -535,7 +549,15 @@ def listar_promocoes():
     conn = SessionLocal()
     try:
         resultado = conn.execute(
-            text("SELECT * FROM promocoes WHERE id_clinica = :id_clinica"),
+            text(
+                """
+                SELECT id_promocao, nome, descricao, valor, data_inicio, data_fim, status,
+                       create_data, update_data
+                FROM promocoes
+                WHERE id_clinica = :id_clinica
+                ORDER BY data_inicio DESC
+                """
+            ),
             {"id_clinica": id_clinica},
         )
         promocoes = [serializar_item(dict(row)) for row in resultado.mappings()]

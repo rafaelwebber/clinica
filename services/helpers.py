@@ -1,4 +1,5 @@
-from datetime import date, datetime, time
+from datetime import date, datetime, time, timedelta
+from decimal import Decimal
 from zoneinfo import ZoneInfo
 
 TZ_SP = ZoneInfo("America/Sao_Paulo")
@@ -47,6 +48,13 @@ def calcular_idade(data_nascimento: str):
     return hoje.year - nasc.year - ((hoje.month, hoje.day) < (nasc.month, nasc.day))
 
 
+def _timedelta_para_hora(valor: timedelta) -> str:
+    total = int(valor.total_seconds()) % 86400
+    horas, resto = divmod(total, 3600)
+    minutos, segundos = divmod(resto, 60)
+    return f"{horas:02d}:{minutos:02d}:{segundos:02d}"
+
+
 def serializar_item(item: dict) -> dict:
     saida = {}
     for chave, valor in item.items():
@@ -56,6 +64,11 @@ def serializar_item(item: dict) -> dict:
             saida[chave] = valor.isoformat()
         elif isinstance(valor, time):
             saida[chave] = valor.isoformat()
+        elif isinstance(valor, timedelta):
+            # PyMySQL devolve colunas TIME como timedelta
+            saida[chave] = _timedelta_para_hora(valor)
+        elif isinstance(valor, Decimal):
+            saida[chave] = float(valor)
         else:
             saida[chave] = valor
     return saida
